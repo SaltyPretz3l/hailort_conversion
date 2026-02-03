@@ -1,0 +1,22 @@
+# LFM2.5 to Hailo-10H Conversion Dependencies
+# ============================================
+
+# Core dependencies
+numpy>=1.24.0
+onnx>=1.14.0
+onnx-graphsurgeon>=0.4.0
+
+# LiquidAI / HuggingFace
+huggingface-hub>=0.19.0
+transformers>=4.36.0
+datasets>=2.15.0
+tokenizers>=0.15.0
+
+# Hailo SDK (install from Hailo Developer Zone - requires WSL2/Linux)
+# Download from: https://hailo.ai/developer-zone/
+# hailo_sdk_client  # Dataflow Compiler - WSL2/Linux only
+# hailo_platform    # HailoRT - Windows supported for runtime
+
+# Development & Testing
+pytest>=7.0.0
+tqdm>=4.66.0

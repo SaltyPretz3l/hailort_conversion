@@ -1,0 +1,13 @@
+# Models and large data files
+models/
+calibration/*.npy
+output/
+.cache/
+__pycache__/
+*.hef
+
+# IDE and system files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

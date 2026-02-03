@@ -1,0 +1,12 @@
+{
+  "num_samples": 512,
+  "max_length": 4096,
+  "source": "gsm8k",
+  "format": "thinking_trace",
+  "shape": [
+    512,
+    4096
+  ],
+  "dtype": "int64",
+  "description": "Calibration data for LFM2.5-Thinking quantization"
+}
