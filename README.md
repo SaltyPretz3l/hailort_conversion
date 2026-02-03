@@ -24,7 +24,6 @@ LFM2.5 uses a hybrid architecture:
 
 ### System Requirements
 
-- **Windows**: WSL2 with Ubuntu 20.04/22.04 (Hailo SDK is Linux-only)
 - **Linux**: Ubuntu 20.04/22.04, 64-bit
 - **Python**: 3.8 - 3.12
 - **Hardware**: Hailo-10H device (for final deployment)
@@ -32,6 +31,10 @@ LFM2.5 uses a hybrid architecture:
 ### Software Requirements
 
 ```bash
+# Create and activate virtual environment
+python3 -m venv venv
+source venv/bin/activate
+
 # Install Python dependencies
 pip install -r requirements.txt
 
@@ -81,7 +84,7 @@ python scripts/liv_decomposition.py ./models/repo/onnx/model.onnx --dry-run
 python scripts/generate_calibration_data.py --samples 512 --output ./calibration/calib_thinking.npy
 ```
 
-### Phase 3: Compile for Hailo (WSL2/Linux required)
+### Phase 3: Compile for Hailo
 
 ```bash
 # Compile with mixed-precision quantization
@@ -144,13 +147,9 @@ print(model.graph.input[0])
 
 ### Error: `hailo_sdk_client not found`
 
-The Hailo SDK requires Linux. On Windows, use WSL2:
+Install the Hailo SDK from the [Hailo Developer Zone](https://hailo.ai/developer-zone/):
 
 ```bash
-# In PowerShell
-wsl --install -d Ubuntu-22.04
-
-# In WSL2
 pip install hailo_sdk_client-<version>-py3-none-linux_x86_64.whl
 ```
 
