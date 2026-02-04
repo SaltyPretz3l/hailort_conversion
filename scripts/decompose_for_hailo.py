@@ -42,12 +42,6 @@ def get_attr_value(node, attr_name, default=None):
 
 def topological_sort_nodes(nodes: List, original_graph) -> List:
     """Topologically sort ONNX nodes using Kahn's algorithm."""
-    available = set()
-    for inp in original_graph.input:
-        available.add(inp.name)
-    for init in original_graph.initializer:
-        available.add(init.name)
-    
     node_outputs = {}
     node_inputs = defaultdict(set)
     
@@ -78,10 +72,6 @@ def topological_sort_nodes(nodes: List, original_graph) -> List:
     while queue:
         idx = queue.popleft()
         sorted_indices.append(idx)
-        
-        for out in nodes[idx].output:
-            if out:
-                available.add(out)
         
         for dep_idx in dependents[idx]:
             in_degree[dep_idx] -= 1
