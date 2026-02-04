@@ -342,13 +342,35 @@ class LFMHailoInference:
         """
         max_tokens = max_tokens or self.config.max_tokens
         
-        current_ids = input_ids.copy()
+        if max_tokens <= 0:
+            return
+
+        if input_ids.ndim != 2:
+            raise ValueError(f"input_ids must be 2D, got shape {input_ids.shape}")
+
         self.state.total_tokens_generated = 0
         
+        # Pre-allocate buffer to avoid O(N^2) copying
+        batch_size = input_ids.shape[0]
+        seq_len = input_ids.shape[1]
+        context_len = self.config.context_length
+
+        # Allocate buffer
+        input_buffer = np.zeros((batch_size, context_len), dtype=input_ids.dtype)
+
+        # Initialize buffer with input
+        if seq_len > context_len:
+            input_buffer[:] = input_ids[:, -context_len:]
+            current_len = context_len
+        else:
+            input_buffer[:, :seq_len] = input_ids
+            current_len = seq_len
+
         for step in range(max_tokens):
             start_time = time.time()
             
-            # Run inference
+            # Run inference on valid window
+            current_ids = input_buffer[:, :current_len]
             logits = self._run_inference(current_ids)
             
             # Sample token
@@ -398,15 +420,13 @@ class LFMHailoInference:
             self.state.total_tokens_generated += 1
             
             # Append to input for next iteration
-            current_ids = np.append(
-                current_ids, 
-                [[token_id]], 
-                axis=1
-            )
-            
-            # Truncate if exceeding context length
-            if current_ids.shape[1] > self.config.context_length:
-                current_ids = current_ids[:, -self.config.context_length:]
+            if current_len < context_len:
+                input_buffer[:, current_len] = token_id
+                current_len += 1
+            else:
+                # Shift buffer left (optimized memmove)
+                input_buffer[:, :-1] = input_buffer[:, 1:]
+                input_buffer[:, -1] = token_id
     
     def reset(self):
         """Reset inference state for new conversation."""
