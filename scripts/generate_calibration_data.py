@@ -127,7 +127,8 @@ def format_as_thinking_trace(sample: dict) -> str:
 def tokenize_samples(
     samples: List[str],
     tokenizer_path: Optional[str],
-    max_length: int
+    max_length: int,
+    batch_size: int = 32
 ) -> np.ndarray:
     """
     Tokenize samples for calibration.
@@ -136,6 +137,7 @@ def tokenize_samples(
         samples: List of text samples
         tokenizer_path: Path to tokenizer directory
         max_length: Maximum sequence length
+        batch_size: Batch size for tokenization
     
     Returns:
         numpy array of shape (num_samples, max_length)
@@ -154,20 +156,21 @@ def tokenize_samples(
         if tokenizer.pad_token is None:
             tokenizer.pad_token = tokenizer.eos_token
         
-        print(f"Tokenizing {len(samples)} samples...")
+        print(f"Tokenizing {len(samples)} samples (batch_size={batch_size})...")
         
-        tokenized = []
-        for sample in tqdm(samples, desc="Tokenizing"):
+        all_tokenized = []
+        for i in tqdm(range(0, len(samples), batch_size), desc="Tokenizing"):
+            batch = samples[i : i + batch_size]
             tokens = tokenizer(
-                sample,
+                batch,
                 max_length=max_length,
                 truncation=True,
                 padding="max_length",
                 return_tensors="np"
             )
-            tokenized.append(tokens["input_ids"][0])
+            all_tokenized.append(tokens["input_ids"])
         
-        return np.stack(tokenized, axis=0)
+        return np.concatenate(all_tokenized, axis=0)
         
     except Exception as e:
         print(f"Warning: Tokenization failed: {e}")
@@ -232,6 +235,12 @@ def main():
         action="store_true",
         help="Also save text samples for inspection"
     )
+    parser.add_argument(
+        "--batch-size",
+        type=int,
+        default=32,
+        help="Batch size for tokenization (default: 32)"
+    )
     
     args = parser.parse_args()
     
@@ -240,6 +249,7 @@ def main():
     print("=" * 60)
     print(f"  Samples: {args.samples}")
     print(f"  Max length: {args.max_length}")
+    print(f"  Batch size: {args.batch_size}")
     print(f"  Output: {args.output}")
     print()
     
@@ -262,7 +272,8 @@ def main():
     tokenized = tokenize_samples(
         text_samples,
         args.tokenizer,
-        args.max_length
+        args.max_length,
+        args.batch_size
     )
     
     # Prepare metadata
