@@ -47,20 +47,34 @@ pip install -r requirements.txt
 ## Project Structure
 
 ```
-LFM Conversion to HailoRT/
+hailort_conversion/
 ├── scripts/
 │   ├── export_lfm_onnx.py        # ONNX model export
-│   ├── liv_decomposition.py      # Graph surgery
+│   ├── decompose_for_hailo.py    # Custom GQA/RoPE/RMSNorm decomposition
+│   ├── inspect_transpose.py      # Diagnostic tool for shape inference
 │   ├── generate_calibration_data.py  # Calibration data
 │   ├── quantize_and_compile.py   # Hailo compilation
 │   └── hailo_runtime.py          # Runtime wrapper
 ├── models/                       # ONNX models (generated)
+│   ├── lfm2.5_fp16_fixed_v3_static.onnx  # Base static model
+│   ├── lfm2.5_fp16_fixed_v7_hailo.onnx   # Clean decomposed model
 ├── calibration/                  # Calibration data (generated)
 ├── output/                       # Compiled HEF files (generated)
 ├── requirements.txt
+├── CONTINUE.md                   # Project status and handoff guide
 ├── Protocol_LFM2.5_ThinkingConversion.md
 └── README.md
 ```
+
+## Model Versions
+
+| Version | Status | Description |
+|---------|--------|-------------|
+| **v3** | ✅ Base | Static shape export from HF. Use as input for decomposition. |
+| **v6** | ❌ Broken | Decomposed model but lacked shape info (caused Hailo `IndexError`). |
+| **v7** | ✅ Ready | Fixed v6. Includes Rank 4 normalization and robust shape propagation. |
+| **v11** | ❌ Broken | RoPE optimization attempts (Static/Dynamic shapes) failed with parser crash (`IndexError`). |
+
 
 ## Quick Start
 
