@@ -299,22 +299,13 @@ class HailoCompatibleDecomposer:
         nodes.append(make_node("Add", [x1_sin, x2_cos], [rot2], name=f"RoPE{uid}_add"))
         
         # 6. Concat -> [B, S, Heads, 64]
-        rope_out_4d = f"{uid}_rope_out_4d"
-        nodes.append(make_node("Concat", [rot1, rot2], [rope_out_4d],
+        # Output DIRECTLY to output_tensor (Rank 4).
+        # Do NOT flatten back to Rank 3.
+        nodes.append(make_node("Concat", [rot1, rot2], [output_tensor],
                                name=f"RoPE{uid}_concat", axis=-1))
                                
-        # 7. Reshape back to [B, S, Hidden]
-        # We can recycle the input shape if we know it's [B, S, Hidden]
-        # Or just use a shape tensor from the input
-        # But we need a Shape node to be dynamic, or use 0,0,-1 if we are sure.
-        # [0, 0, -1] works for [B, S, Hidden]
-        
-        shape_const_out = self.add_initializer_int64(f"{uid}_shape_out", [0, 0, -1])
-        nodes.append(make_node("Reshape", [rope_out_4d, shape_const_out], [output_tensor],
-                               name=f"RoPE{uid}_reshape_out"))
-        
-        # RoPE preserves shape: input_tensor -> output_tensor
-        self.copy_shape(input_tensor, output_tensor)
+        # Note: We do NOT call copy_shape because the shape changes from Rank 3 to Rank 4.
+        # We rely on shape inference to update the value_info for output_tensor.
         
         return nodes
 
@@ -423,8 +414,9 @@ class HailoCompatibleDecomposer:
             
             if should_reshape:
                  # Reshape [B, S, Hidden] -> [B, S, Heads, HeadDim]
+                 # Use [0, -1, ...] to be safe with Hailo parser (avoiding 0 for inferred dim)
                  reshaped = f"{uid}_reshaped_{tensor_name}"
-                 shape_const = self.add_initializer_int64(f"{uid}_shape_{tensor_name}", [0, 0, n_heads, h_dim])
+                 shape_const = self.add_initializer_int64(f"{uid}_shape_{tensor_name}", [0, -1, n_heads, h_dim])
                  nodes.append(make_node("Reshape", [tensor_name, shape_const], [reshaped],
                                         name=f"GQA{uid}_reshape_in_{tensor_name}"))
                  
