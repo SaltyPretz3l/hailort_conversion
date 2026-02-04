@@ -337,8 +337,10 @@ def perform_graph_surgery(
         nodes_to_remove.append(node)
     
     # Remove original fused nodes
-    for node in nodes_to_remove:
-        graph.nodes.remove(node)
+    # Optimization: Use set for O(1) lookup and list comprehension for O(N) reconstruction
+    # instead of repeated list.remove() which is O(N^2) total
+    nodes_to_remove_ids = set(id(node) for node in nodes_to_remove)
+    graph.nodes = [node for node in graph.nodes if id(node) not in nodes_to_remove_ids]
     
     # Cleanup and re-sort
     print("\nCleaning up graph...")
