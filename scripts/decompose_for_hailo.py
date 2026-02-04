@@ -71,12 +71,7 @@ def topological_sort_nodes(nodes: List, original_graph) -> List:
     
     queue = deque()
     for idx in range(len(nodes)):
-        all_ready = True
-        for inp in node_inputs[idx]:
-            if inp not in available and inp in node_outputs:
-                all_ready = False
-                break
-        if all_ready:
+        if in_degree[idx] == 0:
             queue.append(idx)
     
     sorted_indices = []
